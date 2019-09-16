@@ -45,7 +45,7 @@ This database contains six types of defects including crazing, inclusion, patche
 
 - Go back to SeeMe directory and run the script with an example upload that is contained in ~/SeeMe/server/images/uploads
 ```
-python3 SeeMePredictOnceNeu.py --image 4.jpg
+python3 SeeMePredictOnceNeu.py --image crazing_1.jpg
 ```
 - You can see the created output image in the directory ~/SeeMe/server/images/model_outputs
 
