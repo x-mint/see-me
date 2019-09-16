@@ -40,8 +40,7 @@ We first planned SeeMe only as an embedded system and looked for the component h
 * We needed to learn mobile app development, server design, and bring up useful ideas for quick tests of data and deep learning models.
 
 ## What we learned
-****
-
+We learned how to use and adapt deep learning models in torch vision to our task in a very short amount of time and each part of end-to-end product development.
 
 ## What's next for SeeMe
 **Adaptation**: We will add a property that allows project managers to expand the library of defect images by mobile
