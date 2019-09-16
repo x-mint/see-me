@@ -8,13 +8,15 @@ This database contains six types of defects including crazing, inclusion, patche
 
 ### Usage
 - Setup with virtual environment (Python 3):
-  - python3 -m venv see-me-env
-  - source see-me-env/bin/activate
-
+```
+  python3 -m venv see-me-env
+  source see-me-env/bin/activate
+```
 - Install the requirements:
-  - pip3 install git+https://github.com/qubvel/segmentation_models.pytorch
-  - pip3 install -r requirements.txt
-  
+```
+  pip3 install git+https://github.com/qubvel/segmentation_models.pytorch
+  pip3 install -r requirements.txt
+ ```
 Go to instance and open ssh in browser
 ```
 cd SeeMe/seeMeEnv
