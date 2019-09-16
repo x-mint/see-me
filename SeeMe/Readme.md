@@ -42,7 +42,12 @@ This database contains six types of defects including crazing, inclusion, patche
     ├── SeeMePredictOnceNeu.py   
     ├── LICENSE
     └── README.md
-
+    
+- Download NEU database into input/images
+- Change directory to SeeME/ and run the train script to train the resnet model. The script will save the trained model as pretrainedmodels/best_model.pth
+```
+python3 SeeMeTrainNeu.py 
+```
 - Go back to SeeMe directory and run the script with an example upload that is contained in ~/SeeMe/server/images/uploads
 ```
 python3 SeeMePredictOnceNeu.py --image crazing_1.jpg
