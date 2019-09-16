@@ -16,7 +16,7 @@ SeeMe has two main components:
 
 
 ## How we built it
-Our machine learning technology is based on U-Net, a promising model for the image segmentation tasks. 
+SeeMe is mainly based on open source technology and supports the integration of other platforms and services.
 
 **Deep Learning Framework:** PyTorch
 
