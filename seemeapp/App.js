@@ -24,7 +24,7 @@ export default class App extends Component {
     this.setState({ displayingResult: false });
     this.setState({ imageSource: null });
     const options = {
-      maxHeight: 1600,
+      maxHeight: 256,
       maxWidth: 1600
     }
     ImagePicker.showImagePicker(options, response => {
@@ -54,14 +54,15 @@ export default class App extends Component {
 
   handleUpload = async () => {
     this.setState({ loadingResponse: true });
-    const response = await fetch('http://127.0.0.1:80/api/upload', {
+    const response = await fetch('http://34.82.15.64:3000/api/upload', {
       method: 'POST',
       body: this.createFormData(this.state.imageSource, {})
     });
     if (response.ok) {
       let responseJSON = await response.json();
       let image = responseJSON['image'];
-      image = image.replace('undefined', 'data:image/jpeg;base64,');
+      //image = image.replace('undefined', 'data:image/jpeg;base64,');
+      image = 'data:image/jpeg;base64,' + image;
       this.setState({ imageSource: image });
       this.setState({ displayingResult: true });
     } else {
@@ -83,6 +84,13 @@ export default class App extends Component {
     const { imageSource, displayingResult } = this.state;
     return (
       <View style={ styles.container }>
+        { !imageSource && (
+          <Image
+            source={ require('./logo.jpg') }
+            style={ styles.logo }
+          />
+          )
+        }
         { imageSource && (
             <React.Fragment>
               <Image
@@ -108,6 +116,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  logo: {
+    alignSelf: 'center',
+    height: 150,
+    width: 250,
+    borderWidth: 1,
+    borderRadius: 50
   },
   avatar: {
      width: 300,
