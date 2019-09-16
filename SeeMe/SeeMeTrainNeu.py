@@ -1,5 +1,5 @@
 import sys
-package_path = './input/unetmodelscript'
+package_path = '/home/melodi_caliskan/SeeMe/input/unetmodelscript'
 sys.path.append(package_path)
 import os
 import time

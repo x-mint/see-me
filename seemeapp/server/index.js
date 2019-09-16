@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
 
 app.post('/api/upload', upload.single('photo'), (req, res) => {
 
-  const modelPath = path.join(__dirname, '..', 'SeeMePredictOnce.py');
+  const modelPath = path.join(__dirname, '..', 'SeeMePredictOnceNEU.py');
   const pythonProcess = spawn('python3', [modelPath, req.file.filename]);
   var res_image;
   var responseData = '';
