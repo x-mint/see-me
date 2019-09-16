@@ -17,6 +17,26 @@ This database contains six types of defects including crazing, inclusion, patche
   pip3 install git+https://github.com/qubvel/segmentation_models.pytorch
   pip3 install -r requirements.txt
  ```
+
+### The Directory Layout
+
+    .
+    ├── input          
+    │   ├── images         
+    |      └── crazing_1.jpg
+    │   └── annotations.csv        
+    ├── pretrainedmodels 
+    |   └──best_model.pth
+    ├── server
+    │   ├── images          
+    |      ├── uploads   
+    |         └── crazing_1.jpg
+    |      ├── model_outputs   
+    |         └── crazing_1.jpg
+    ├── tools                   
+    ├── LICENSE
+    └── README.md
+
 Go to instance and open ssh in browser
 ```
 cd SeeMe/seeMeEnv
