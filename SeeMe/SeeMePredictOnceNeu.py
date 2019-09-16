@@ -22,7 +22,7 @@ class TestDataset(Dataset):
     def __init__(self, image_name):
         self.image_name = image_name
         self.num_samples = 1
-        self.root = "./input/test_images_sub"
+        self.root = "/home/melodi_caliskan/SeeMe/server/images/uploads/"
 
         self.transform = Compose(
             [
@@ -76,7 +76,7 @@ def rle2mask(rle, imgshape):
 
 def getModel():
     # Initialize mode and load trained weights
-    model_path = os.path.join(basePath, "/input/unetstartermodelfile/model_neu.pth")
+    model_path = os.path.join(basePath, "input/unetstartermodelfile/model_neu.pth")
     model = Unet("resnet50", classes=6)
     model.to(torch.device("cpu"))
     model.eval()
@@ -142,7 +142,7 @@ def plot_image(test_data_folder, fname, mask, text):
     img = cv2.resize(img, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
     h, w = img.shape[:2]
     mask2 = cv2.resize(mask, (w, h))
-    _, contours, _ = cv2.findContours(mask2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(mask2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
@@ -154,7 +154,7 @@ def plot_image(test_data_folder, fname, mask, text):
 
     plt.title(fname)
     plt.imshow(img)
-    plt.savefig(os.path.join(basePath, '/server/images/model_outputs/' + fname))
+    plt.savefig(os.path.join(basePath, 'server/images/model_outputs/' + fname))
     plt.show()
 
 
@@ -165,8 +165,8 @@ def main(testset, test_data_folder, fname):
     predictions = getPredictions(testset, model)
     # save predictions to submission_tmp.csv
     df_preds = pd.DataFrame(predictions, columns=['ImageId_ClassId', 'EncodedPixels'])
-    df_preds.to_csv(os.path.join(basePath, "/input/submission_tmp.csv"), index=0)
-    df_preds = pd.read_csv(os.path.join(basePath, "/input/submission_tmp.csv"))
+    df_preds.to_csv(os.path.join(basePath, "input/submission_tmp.csv"), index=0)
+    df_preds = pd.read_csv(os.path.join(basePath, "input/submission_tmp.csv"))
 
     class_dict = {0: 'Rolled-in Scale', 1: 'Patches', 2: 'Crazing', 3: 'Pitted Surface', 4: 'Inclusion', 5: 'Scratches'}
     defectedClasses = getDefectList(df_preds)
@@ -180,7 +180,7 @@ def main(testset, test_data_folder, fname):
 
 
 if __name__ == '__main__':
-    test_data_folder = os.path.join(basePath, "/server/images/uploads/")
+    test_data_folder = os.path.join(basePath, "server/images/uploads/")
 
     # initialize test dataloader
     num_workers = 2

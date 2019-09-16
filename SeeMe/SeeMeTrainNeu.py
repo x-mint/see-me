@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import cv2
 from sklearn.model_selection import train_test_split
-from model import Unet # import Unet model from the script
+from model import Unet
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn as nn
 import torch.optim as optim
@@ -26,7 +26,7 @@ random.seed(seed)
 os.environ["PYTHONHASHSEED"] = str(seed)
 np.random.seed(seed)
 torch.cuda.manual_seed(seed)
-torch.backends.cudnn.deterministic = True   # to get deterministic behaviour
+torch.backends.cudnn.deterministic = True 
 
 DEFECTS = {'rolled-in_scale': 0, 'patches': 1, 'crazing': 2, 'pitted_surface': 3, 'inclusion': 4, 'scratches': 5}
 NEU_height = 224
@@ -62,7 +62,7 @@ class SteelDataset(Dataset):
 
 class Trainer(object):
     def __init__(self, model):
-        self.train_df_path = os.path.join(BasePath, '/input/annotations.csv')
+        self.train_df_path = os.path.join(BasePath, 'input/annotations.csv')
         self.num_workers = 6
         self.batch_size = {"train": 4, "val": 4}
         self.accumulation_steps = 32 // self.batch_size['train']
@@ -97,7 +97,7 @@ class Trainer(object):
 
     def iterate(self, epoch, phase):
         start = time.strftime("%H:%M:%S")
-        print(f"Starting epoch: {epoch} | phase: {phase} | Start Time: {start}")
+        print("Starting epoch: {} | phase: {} | Start Time: {}".format(epoch, phase, start))
         self.net.train(phase == "train")
         dataloader = self.dataloaders[phase]
         running_loss = 0.0
@@ -133,7 +133,7 @@ class Trainer(object):
             if val_loss < self.best_loss:
                 print("Saving best model...")
                 state["best_loss"] = self.best_loss = val_loss
-                torch.save(state, os.path.join(BasePath, "./model_neu.pth"))
+                torch.save(state, os.path.join(BasePath, "input/unetstartermodelfile/model_neu.pth"))
             print()
 
 
@@ -197,7 +197,7 @@ def plot(scores):
     plt.xlabel('Epoch')
     plt.ylabel('BCE loss')
     plt.legend()
-    plt.savefig(os.path.join(BasePath, 'outputs/train_val_loss.png'))
+    plt.savefig(os.path.join(BasePath, 'output/train_val_loss.png'))
     plt.close()
 
 
