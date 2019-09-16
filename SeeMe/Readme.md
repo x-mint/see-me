@@ -23,16 +23,17 @@ This database contains six types of defects including crazing, inclusion, patche
     .
     ├── input          
     │   ├── images         
-    |      └── crazing_1.jpg
+    |       └── crazing_1.jpg
     │   └── annotations.csv        
     ├── pretrainedmodels 
-    |   └──best_model.pth
+    |   └── best_model.pth
+    |   └── train_val_loss.png
     ├── server
     │   ├── images          
-    |      ├── uploads   
-    |         └── crazing_1.jpg
-    |      ├── model_outputs   
-    |         └── crazing_1.jpg
+    |       ├── uploads   
+    |          └── crazing_1.jpg
+    |       ├── model_outputs   
+    |          └── crazing_1.jpg
     ├── tools                   
     ├── LICENSE
     └── README.md
