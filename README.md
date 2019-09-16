@@ -1,7 +1,8 @@
 # SeeMe
 Hackathon project for #PTSH19
 
-
+* SeeMe : Contains deep learning model which uses a UNet model with pretrained Res-Net50 encoder and uses BCE loss
+* seemeapp: Contains required files for the android application developed using React-Native.
 
 ## Inspiration
 In the manufacturing, materials are affected by multiple external reasons and some portions of the end-products are produced with defects and become inoperable. To ensure quality, products are inspected manually before distributing to the customers. Manual inspection is slow, costly, ineffective and occasionally dangerous, especially in the steel manufacturing process. 
