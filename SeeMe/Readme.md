@@ -1,3 +1,9 @@
+### Data
+
+NEU Surface Defect Database 
+Link: http://faculty.neu.edu.cn/yunhyan/NEU_surface_defect_database.html
+![data](dataset_sample.png)
+
 ### Usage
 
 Go to instance and open ssh in browser
