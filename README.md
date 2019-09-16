@@ -1,4 +1,4 @@
-# see-me
+# SeeMe
 Hackathon project for #PTSH19
 
 
