@@ -8,7 +8,7 @@ source bin/activate
 
 Go back to SeeMe directory and run the script with an example upload that is contained in ~/SeeMe/server/images/uploads
 ```
-python3 SeeMePredictOnce.py 4.jpg
+python3 SeeMePredictOnceNeu.py 4.jpg
 ```
 You can see the created output image in the directory ~/SeeMe/server/images/model_outputs
 
