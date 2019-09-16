@@ -1,7 +1,9 @@
 ### Data
 
-NEU Surface Defect Database 
-Link: http://faculty.neu.edu.cn/yunhyan/NEU_surface_defect_database.html
+[NEU Surface Defect Database](http://faculty.neu.edu.cn/yunhyan/NEU_surface_defect_database.html) [1]
+
+
+[1] [K. Song and Y. Yan, “A noise robust method based on completed local binary patterns for hot-rolled steel strip surface defects,” Applied Surface Science, vol. 285, pp. 858-864, Nov. 2013.](https://www.sciencedirect.com/science/article/pii/S0169433213016437)
 ![data](dataset_sample.png)
 
 ### Usage
