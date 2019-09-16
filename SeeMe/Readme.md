@@ -43,7 +43,7 @@ This database contains six types of defects including crazing, inclusion, patche
     ├── LICENSE
     └── README.md
     
-- Download NEU database into input/images
+- [Download NEU database](https://drive.google.com/open?id=0B5OUtBsSxu1Bdjh4dk1SeGYtNFU) into input/images 
 - Change directory to SeeME/ and run the train script to train the resnet model. The script will save the trained model as pretrainedmodels/best_model.pth
 ```
 python3 SeeMeTrainNeu.py 
