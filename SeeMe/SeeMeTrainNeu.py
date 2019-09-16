@@ -1,45 +1,46 @@
-import sys
-package_path = '/home/melodi_caliskan/SeeMe/input/unetmodelscript'
-sys.path.append(package_path)
 import os
 import time
 import warnings
 import random
+import argparse
 import torch
 import numpy as np
 import pandas as pd
 import cv2
+
 from sklearn.model_selection import train_test_split
-from model import Unet
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from matplotlib import pyplot as plt
+
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset
-from matplotlib import pyplot as plt
 from albumentations import (HorizontalFlip, Normalize, Compose)
 from albumentations.torch import ToTensor
 
+import segmentation_models_pytorch as smp
+
 warnings.filterwarnings("ignore")
+
 seed = 69
 random.seed(seed)
 os.environ["PYTHONHASHSEED"] = str(seed)
 np.random.seed(seed)
 torch.cuda.manual_seed(seed)
-torch.backends.cudnn.deterministic = True 
+torch.backends.cudnn.deterministic = True  # to get deterministic behaviour
 
 DEFECTS = {'rolled-in_scale': 0, 'patches': 1, 'crazing': 2, 'pitted_surface': 3, 'inclusion': 4, 'scratches': 5}
-NEU_height = 224
-NEU_width = 224
+WIDTH = 224
+HEIGHT = 224
 NEU_class = 6
-BasePath = '/home/melodi_caliskan/SeeMe/'
 
 
 class SteelDataset(Dataset):
-    def __init__(self, image_names, annotations, phase):
+    def __init__(self, image_names, annotations, image_folder, phase):
         self.image_names = image_names
         self.annotations = annotations
-        self.root = "/home/melodi_caliskan/SeeMe/input/"
+        self.image_folder = image_folder
         self.phase = phase
         self.transforms = get_transforms(phase)
 
@@ -47,9 +48,10 @@ class SteelDataset(Dataset):
         image_name = self.image_names[idx]
         annotation = self.annotations.loc[self.annotations['Image'] == image_name]
         mask = make_mask(annotation)
-        image_path = os.path.join(self.root, "IMAGES", image_name + '.jpg')
+        image_path = os.path.join(self.image_folder, image_name + '.jpg')
         img = cv2.imread(image_path)
-        img = cv2.resize(img, (NEU_width, NEU_height), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(img, (WIDTH, HEIGHT
+                               ), interpolation=cv2.INTER_AREA)
         augmented = self.transforms(image=img, mask=mask)
         img = augmented['image']
         mask = augmented['mask']
@@ -61,31 +63,38 @@ class SteelDataset(Dataset):
 
 
 class Trainer(object):
-    def __init__(self, model):
-        self.train_df_path = os.path.join(BasePath, 'input/annotations.csv')
-        self.num_workers = 6
-        self.batch_size = {"train": 4, "val": 4}
-        self.accumulation_steps = 32 // self.batch_size['train']
-        self.lr = 5e-4
-        self.num_epochs = 20
+    def __init__(self, model, train_settings):
+        self.train_path = train_settings['train_path']
+        self.image_folder = train_settings['image_folder']
+        self.best_model_path = train_settings['best_model_path']
+        self.num_workers = train_settings['num_workers']
+        self.batch_size = train_settings['batch_size']
+        self.accumulation_steps = train_settings['acc_step'] // self.batch_size['train']
+        self.lr = train_settings['learning_rate']
+        self.num_epochs = train_settings['epochs']
         self.best_loss = float("inf")
         self.phases = ["train", "val"]
+
         self.device = torch.device("cuda:0")
         self.net = model.to(self.device)
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.net.parameters(), lr=self.lr)
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode="min", patience=3, verbose=True)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode="min", patience=train_settings['patience'],
+                                           verbose=True)
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
         cudnn.benchmark = True
+
         self.dataloaders = {
             phase: provider(
-                df_path=self.train_df_path,
+                train_path=self.train_path,
+                image_folder=self.image_folder,
                 phase=phase,
                 batch_size=self.batch_size[phase],
                 num_workers=self.num_workers,
             )
             for phase in self.phases
         }
+
         self.losses = {phase: [] for phase in self.phases}
 
     def forward(self, images, targets):
@@ -96,8 +105,7 @@ class Trainer(object):
         return loss, outputs
 
     def iterate(self, epoch, phase):
-        start = time.strftime("%H:%M:%S")
-        print("Starting epoch: {} | phase: {} | Start Time: {}".format(epoch, phase, start))
+        print("Phase: %s | Epoch: %s | Start Time: %s" % (phase, epoch, time.strftime("%H:%M:%S")))
         self.net.train(phase == "train")
         dataloader = self.dataloaders[phase]
         running_loss = 0.0
@@ -133,7 +141,7 @@ class Trainer(object):
             if val_loss < self.best_loss:
                 print("Saving best model...")
                 state["best_loss"] = self.best_loss = val_loss
-                torch.save(state, os.path.join(BasePath, "input/unetstartermodelfile/model_neu.pth"))
+                torch.save(state, self.best_model_path)
             print()
 
 
@@ -156,16 +164,17 @@ def get_transforms(phase):
 
 
 def provider(
-        df_path,
+        train_path,
+        image_folder,
         phase,
         batch_size=8,
         num_workers=4,
 ):
-    df = pd.read_csv(df_path, sep=';')
+    df = pd.read_csv(train_path, sep=';')
     train_df, val_df = train_test_split(df, test_size=0.2, stratify=df["name"])
     df = train_df if phase == "train" else val_df
     image_names = list(set(df['Image']))
-    image_dataset = SteelDataset(image_names, df, phase)
+    image_dataset = SteelDataset(image_names, df, image_folder, phase)
     dataloader = DataLoader(
         image_dataset,
         batch_size=batch_size,
@@ -177,8 +186,8 @@ def provider(
 
 
 def make_mask(annotation):
-    masks = np.zeros((NEU_height, NEU_width, NEU_class), dtype=np.float32)
-    mask = np.zeros([NEU_height, NEU_width], dtype=np.uint8)
+    masks = np.zeros((HEIGHT, WIDTH, NEU_class), dtype=np.float32)
+    mask = np.zeros([HEIGHT, WIDTH], dtype=np.uint8)
     for idx, row in annotation.iterrows():
         defect_name = row['name']
         mask[row['xmin']:row['xmax'], row['ymin']:row['ymax']] = 1
@@ -189,7 +198,7 @@ def make_mask(annotation):
     return masks
 
 
-def plot(scores):
+def plot(scores, model_loss_path):
     plt.figure()
     plt.plot(range(len(scores["train"])), scores["train"], label='train BCE loss')
     plt.plot(range(len(scores["train"])), scores["val"], label='val BCE loss')
@@ -197,15 +206,37 @@ def plot(scores):
     plt.xlabel('Epoch')
     plt.ylabel('BCE loss')
     plt.legend()
-    plt.savefig(os.path.join(BasePath, 'output/train_val_loss.png'))
+    plt.savefig(model_loss_path)
     plt.close()
 
 
 if __name__ == '__main__':
-    model = Unet("resnet50", encoder_weights="imagenet", classes=6, activation=None)
-    model_trainer = Trainer(model)
+
+    # base_path = '/home/melodi_caliskan/SeeMe/'
+
+    parser = argparse.ArgumentParser(prog='see-me')
+    parser.add_argument('-rp', '--rootpath')
+    args = parser.parse_args()
+    root_path = args.rootpath
+    if not root_path:
+        root_path = os.getcwd()
+
+    train_path = os.path.join(root_path, 'input', 'annotations.csv')
+    image_folder = os.path.join(root_path, 'input', 'images')
+    model_output_folder = os.path.join(root_path, 'pretrainedmodels')
+    best_model_path = os.path.join(model_output_folder, 'model_neu.pth')
+    model_loss_path = os.path.join(model_output_folder, 'train_val_loss.png')
+
+    train_settings = {'num_workers': 6, 'batch_size': {'train': 4, 'val': 4},
+                      'acc_step': 32, 'learning_rate': 5e-4, 'epochs': 20, 'patience': 3,
+                      'train_path': train_path,
+                      'image_folder': image_folder,
+                      'best_model_path': best_model_path}
+
+    model = smp.Unet("resnet50", encoder_weights="imagenet", classes=6, activation=None)
+    model_trainer = Trainer(model, train_settings)
     model_trainer.start()
 
     # PLOT TRAINING
     losses = model_trainer.losses
-    plot(losses)
+    plot(losses, model_loss_path)

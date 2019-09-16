@@ -1,29 +1,26 @@
-import sys
-package_path = './input/unetmodelscript'
-sys.path.append(package_path)
-
 import os
 import cv2
 import torch
+import argparse
 import pandas as pd
 import numpy as np
+
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
 from albumentations import (Normalize, Compose, Resize)
 from albumentations.torch import ToTensor
-from model import Unet
-import matplotlib.pyplot as plt
 
-WIDTH=224
-HEIGHT=224
-basePath = "/home/melodi_caliskan/SeeMe/"
+import segmentation_models_pytorch as smp
+
+WIDTH = 224
+HEIGHT = 224
 
 
 class TestDataset(Dataset):
-    def __init__(self, image_name):
+    def __init__(self, image_name, image_folder):
         self.image_name = image_name
+        self.image_folder = image_folder
         self.num_samples = 1
-        self.root = "/home/melodi_caliskan/SeeMe/server/images/uploads/"
-
         self.transform = Compose(
             [
                 Resize(WIDTH, HEIGHT), Normalize(), ToTensor()
@@ -31,7 +28,7 @@ class TestDataset(Dataset):
         )
 
     def __getitem__(self, idx):
-        image_path = os.path.join(self.root, self.image_name)
+        image_path = os.path.join(self.image_folder, self.image_name)
         img = cv2.imread(image_path)
         processed_image = self.transform(image=img)["image"]
         return self.image_name, processed_image
@@ -41,7 +38,7 @@ class TestDataset(Dataset):
 
 
 def mask2rle(img):
-    pixels= img.T.flatten()
+    pixels = img.T.flatten()
     pixels = np.concatenate([[0], pixels, [0]])
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
     runs[1::2] -= runs[::2]
@@ -74,10 +71,9 @@ def rle2mask(rle, imgshape):
     return np.flipud(np.rot90(mask.reshape(h, w), k=1))
 
 
-def getModel():
+def getModel(model_path):
     # Initialize mode and load trained weights
-    model_path = os.path.join(basePath, "input/unetstartermodelfile/model_neu.pth")
-    model = Unet("resnet50", classes=6)
+    model = smp.Unet("resnet50", classes=6)
     model.to(torch.device("cpu"))
     model.eval()
     state = torch.load(model_path, map_location=lambda storage, loc: storage)
@@ -130,19 +126,20 @@ def getDefectList(df_preds):
     return defectedClasses
 
 
-def getProcessedImage(test_data_folder, fname, df_preds, iloc_i):
-    img = cv2.imread(os.path.join(test_data_folder, fname))
+def getProcessedImage(image_folder, image_name, df_preds, iloc_i):
+    img = cv2.imread(os.path.join(image_folder, image_name))
     img = cv2.resize(img, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
     mask = rle2mask(df_preds['EncodedPixels'].iloc[iloc_i], img.shape)
     return img, mask
 
 
-def plot_image(test_data_folder, fname, mask, text):
-    img = cv2.imread(os.path.join(test_data_folder, fname))
+def plot_image(image_folder, masked_image_folder, image_name, mask, text):
+    img = cv2.imread(os.path.join(image_folder, image_name))
+
     img = cv2.resize(img, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
     h, w = img.shape[:2]
     mask2 = cv2.resize(mask, (w, h))
-    contours, _ = cv2.findContours(mask2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    _, contours, _ = cv2.findContours(mask2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
@@ -152,46 +149,61 @@ def plot_image(test_data_folder, fname, mask, text):
     cv2.rectangle(img, (x, y), (x + w, y + h), (249, 50, 12), 2)
     cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (114, 0, 218), 1)
 
-    plt.title(fname)
+    plt.title(image_name)
     plt.imshow(img)
-    plt.savefig(os.path.join(basePath, 'server/images/model_outputs/' + fname))
+    plt.savefig(os.path.join(masked_image_folder, image_name))
     plt.show()
 
 
-def main(testset, test_data_folder, fname):
+def main(testset, image_folder, image_name, root_path):
+    model_path = os.path.join(root_path, 'pretrainedmodels', 'model_neu.pth')
+    tmp_pred_path = os.path.join(root_path, 'input', 'submission_tmp.csv')
+    masked_image_folder = os.path.join(root_path, 'server', 'images', 'model_outputs')
+
     # get model
-    model = getModel()
+    model = getModel(model_path)
+
     # get predictions
     predictions = getPredictions(testset, model)
     # save predictions to submission_tmp.csv
     df_preds = pd.DataFrame(predictions, columns=['ImageId_ClassId', 'EncodedPixels'])
-    df_preds.to_csv(os.path.join(basePath, "input/submission_tmp.csv"), index=0)
-    df_preds = pd.read_csv(os.path.join(basePath, "input/submission_tmp.csv"))
+    df_preds.to_csv(tmp_pred_path, index=0)
+    df_preds = pd.read_csv(tmp_pred_path)
 
     class_dict = {0: 'Rolled-in Scale', 1: 'Patches', 2: 'Crazing', 3: 'Pitted Surface', 4: 'Inclusion', 5: 'Scratches'}
     defectedClasses = getDefectList(df_preds)
     classes_images = []
     for class_ in defectedClasses:
-        img, mask = getProcessedImage(test_data_folder, fname, df_preds, class_)
+        img, mask = getProcessedImage(image_folder, image_name, df_preds, class_)
         classes_images.append([class_, img])
-        plot_image(test_data_folder, fname, mask, class_dict.get(class_))
+        plot_image(image_folder, masked_image_folder, image_name, mask, class_dict.get(class_))
 
     return classes_images
 
 
 if __name__ == '__main__':
-    test_data_folder = os.path.join(basePath, "server/images/uploads/")
 
+    # base_path = '/home/melodi_caliskan/SeeMe/'
+    parser = argparse.ArgumentParser(prog='see-me')
+    parser.add_argument('-rp', '--rootpath')
+    parser.add_argument('-image', '--image')
+    args = parser.parse_args()
+    root_path = args.rootpath
+    if not root_path:
+        root_path = os.getcwd()
+
+    image_name = args.image
+    test_image_folder = os.path.join(root_path, 'server', 'images', 'uploads')
+    masked_image_folder = os.path.join(root_path, 'server', 'images', 'model_outputs')
     # initialize test dataloader
     num_workers = 2
     min_size = 3500
-    fname = sys.argv[1]
 
-    testset = DataLoader(
-        TestDataset(fname),
+    test_set = DataLoader(
+        TestDataset(image_name, test_image_folder),
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True
     )
-    main(testset, test_data_folder, fname)
 
+    main(test_set, test_image_folder, image_name, root_path)
