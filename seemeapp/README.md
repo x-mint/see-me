@@ -4,19 +4,7 @@ Connects to the server with port 8081.
 
 ### Usage
 
-Go to instance and open ssh in browser
-```
-cd SeeMe/seeMeEnv
-source bin/activate
-```
-
-Run the server
-```
-cd SeeMe/server
-node index
-```
-
-After runnig the server open Android Studio Virtual Device. Then using command line:
+Open Android Studio Virtual Device. Then using command line:
 ```
 cd SeeMeApp
 npm start
