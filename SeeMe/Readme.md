@@ -49,7 +49,7 @@ python3 SeeMeTrainNeu.py
 ```
 - Go back to SeeMe directory and run the script with an example upload that is contained in ~/SeeMe/server/images/uploads
 ```
-python3 SeeMePredictOnceNeu.py --image crazing_1.jpg
+python3 SeeMePredictOnceNEU.py crazing_1.jpg
 ```
 - You can see the created output image in the directory ~/SeeMe/server/images/model_outputs
 
