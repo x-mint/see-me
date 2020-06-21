@@ -1,5 +1,5 @@
 # SeeMe
-Hackathon project for #PTSH19
+[Hackathon project for Global PyTorch Summer Hackathon 2019](https://devpost.com/software/seeme-o7bfuj)
 
 * SeeMe : Contains deep learning model which uses a UNet model with pretrained Res-Net50 encoder and uses BCE loss
 * seemeapp: Contains required files for the android application developed using React-Native.
